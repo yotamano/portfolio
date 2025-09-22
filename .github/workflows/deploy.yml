@@ -29,6 +29,11 @@ jobs:
       - name: Install Dependencies 📦
         run: npm ci
       
+      - name: Debug Cloudinary Secret
+        run: echo "Length of Cloudinary API Secret is ${#SECRET}"
+        env:
+          SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+      
       - name: Generate Content 📝
         run: npm run generate-content
         env:
