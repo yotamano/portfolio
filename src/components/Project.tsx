@@ -292,12 +292,15 @@ const Project: React.FC<ProjectProps> = ({
                     switch (block.type) {
                       case 'heading':
                         return (
-                          <AnimatedTitle
+                          <motion.div
                             key={`l3-block-${index}-${project.id}`}
-                            text={block.content}
-                            className="text-title-style"
-                            style={{ marginTop: index > 0 ? '2rem' : '0', marginBottom: '1rem' }}
-                          />
+                            style={{ marginTop: index > 0 ? '2rem' : '0', marginBottom: '2rem' }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 + index * 0.1 }}
+                          >
+                            <p className="text-paragraph-style">{block.content}</p>
+                          </motion.div>
                         );
                       case 'paragraph':
                         return (

@@ -30,9 +30,7 @@ jobs:
         run: npm ci
       
       - name: Generate Content 📝
-        run: |
-          mkdir -p public/content
-          node -r ts-node/register src/scripts/generateContent.ts
+        run: npm run generate-content
         env:
           DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
@@ -41,8 +39,8 @@ jobs:
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
       
-      - name: Build 🔧
-        run: npm run build
+      - name: Build and Export 🔧
+        run: npm run export
         env:
           DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
