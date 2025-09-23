@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "export": "next build && next export",
+    "export:gh": "next build",
     "lint": "next lint",
     "generate-content": "ts-node src/scripts/generateContent.ts"
   },

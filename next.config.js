@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production';
-const isGitHubPages = process.env.GITHUB_ACTIONS === 'true';
+const isGitHubPages = process.env.IS_GITHUB_PAGES === 'true';
 
 const nextConfig = {
   reactStrictMode: true,
@@ -12,8 +12,8 @@ const nextConfig = {
   trailingSlash: true,
   distDir: 'out',
   // Add basePath for GitHub Pages deployment
-  basePath: isProd && isGitHubPages ? '/drive-portfolio' : '',
-  assetPrefix: isProd && isGitHubPages ? '/drive-portfolio' : '',
+  basePath: isGitHubPages ? '/drive-portfolio' : '',
+  assetPrefix: isGitHubPages ? '/drive-portfolio' : '',
 };
 
 module.exports = nextConfig; 
