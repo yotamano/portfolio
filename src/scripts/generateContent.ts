@@ -23,6 +23,7 @@ cloudinary.config({
 const CONTENT_DIR = path.join(process.cwd(), 'public', 'content');
 const MANIFEST_FILE = path.join(CONTENT_DIR, '.asset-manifest.json');
 const LAYOUT_CACHE_FILE = path.join(CONTENT_DIR, '.layout-cache.json');
+const PROJECT_CACHE_FILE = path.join(CONTENT_DIR, '.project-cache.json');
 
 type ManifestSuccessEntry = {
   status: 'success';
@@ -43,10 +44,26 @@ type AssetManifest = {
   [driveId: string]: ManifestSuccessEntry | ManifestFailureEntry;
 };
 
+type ParsedContentSegment = 
+  | { type: 'text'; content: string }
+  | { type: 'projectLink'; text: string; projectId: string }
+  | { type: 'pageLink'; text: string; path: string }
+  | { type: 'externalLink'; text: string; url: string }
+  | { type: 'emailLink'; text: string; email: string };
+
+type ParsedParagraph = ParsedContentSegment[];
+
 type LayoutCache = {
   [projectId: string]: {
     mediaSignature: string;
     layouts: MediaLayout[];
+  }
+};
+
+type ProjectCache = {
+  [projectId: string]: {
+    projectSignature: string;
+    zoomContent: any;
   }
 };
 
@@ -79,6 +96,19 @@ function saveLayoutCache(cache: LayoutCache) {
   fs.writeFileSync(LAYOUT_CACHE_FILE, JSON.stringify(cache, null, 2));
 }
 
+// Load or initialize the project cache
+function loadProjectCache(): ProjectCache {
+  if (fs.existsSync(PROJECT_CACHE_FILE)) {
+    return JSON.parse(fs.readFileSync(PROJECT_CACHE_FILE, 'utf-8'));
+  }
+  return {};
+}
+
+// Save the project cache
+function saveProjectCache(cache: ProjectCache) {
+  fs.writeFileSync(PROJECT_CACHE_FILE, JSON.stringify(cache, null, 2));
+}
+
 // Create a signature for a project's media files to check for changes
 function createMediaSignature(mediaFiles: MediaFile[]): string {
   if (!mediaFiles || mediaFiles.length === 0) {
@@ -92,6 +122,28 @@ function createMediaSignature(mediaFiles: MediaFile[]): string {
   
   // Return a hash of the string
   return createHash('sha256').update(signatureString).digest('hex');
+}
+
+// Create a signature for a project's content to check for changes
+function createProjectSignature(project: ContentItem): string {
+  if (!project) {
+    return '';
+  }
+  const mediaSignature = (project.mediaFiles || [])
+    .map(f => `${f.id}-${f.modifiedTime}`)
+    .sort()
+    .join('|');
+
+  // Use a stable serialization of the project content
+  const contentString = JSON.stringify({
+    id: project.id,
+    name: project.name,
+    content: project.content,
+    path: project.path,
+    media: mediaSignature,
+  });
+
+  return createHash('sha256').update(contentString).digest('hex');
 }
 
 // Function to upload a file to Cloudinary from a stream
@@ -278,8 +330,9 @@ Please generate a structured JSON object by following these exact parsing rules:
 1.  Find the text associated with the "L1" heading and place it in the "l1" field.
 2.  Find the text associated with the "L2" heading and place it in the "l2" field.
 3.  Find the text associated with the "L3" heading. Parse ONLY this section into a JSON array of blocks for the "l3" field.
-    - A short line of text followed by a line break should be treated as a 'heading'.
-    - Any hyperlinks should be extracted into a 'link' object.
+    - A short line of text followed by a line break should be treated as a 'heading'. Ignore headings titled "Links" or "Credits".
+    - Any standalone hyperlinks should be extracted into a 'link' object. The link text should be the title of the link, not the full URL.
+    - Any lines matching the pattern "[role]: [name]" should be grouped together into a single 'credits' object. If the name contains a link, extract the URL and associate it with the name.
     - All other text should be treated as a 'paragraph'.
 
 Return a JSON object with this exact structure:
@@ -290,7 +343,8 @@ Return a JSON object with this exact structure:
     "l3": [
       { "type": "heading", "content": "This is an inner title from the L3 section" },
       { "type": "paragraph", "content": "This is a paragraph from the L3 section." },
-      { "type": "link", "url": "https://example.com", "text": "This is a clickable link from the L3 section" }
+      { "type": "link", "url": "https://example.com", "text": "Visit the Live Site" },
+      { "type": "credits", "items": [{ "role": "Team", "name": "Yuval Hadar", "url": "https://yuvalhadar.com/" }] }
     ],
     "year": "The extracted year",
     "medium": "The extracted medium",
@@ -328,7 +382,8 @@ IMPORTANT:
       l3: [
         {"type": "paragraph", "content": "Traditional portfolio websites lack engaging interaction patterns."},
         {"type": "paragraph", "content": "Built an innovative zoom-based navigation system with seamless transitions."},
-        {"type": "paragraph", "content": "Created an immersive experience that feels like AI-generated content expansion."}
+        {"type": "paragraph", "content": "Created an immersive experience that feels like AI-generated content expansion."},
+        {"type": "credits", "items": [{"role": "Designer", "name": "Yotam Mano"}]}
        ],
         year: "2024",
         medium: "Web Development", 
@@ -555,6 +610,7 @@ async function main() {
   console.log('Syncing assets with Cloudinary...');
   const manifest = loadManifest();
   const layoutCache = loadLayoutCache();
+  const projectCache = loadProjectCache();
   const seenDriveIds = new Set<string>();
 
   for (const item of portfolioData.root.children) {
@@ -606,7 +662,8 @@ async function main() {
   
   saveManifest(manifest);
   saveLayoutCache(layoutCache);
-  console.log('Asset manifest and layout cache saved.');
+  saveProjectCache(projectCache);
+  console.log('Asset manifest, layout cache, and project cache saved.');
   
   errorLog.end();
   // Check if error log has content other than the header
@@ -622,13 +679,34 @@ async function main() {
   
   const zoomProjects = [];
   for (const project of projects) {
-    const projectZoomContent = await generateProjectZoomContent(project);
-    zoomProjects.push(projectZoomContent);
+    const currentSignature = createProjectSignature(project);
+    const cachedProject = projectCache[project.id];
+
+    if (cachedProject && cachedProject.projectSignature === currentSignature) {
+      console.log(`Using cached project content for: ${project.name}`);
+      zoomProjects.push(cachedProject.zoomContent);
+    } else {
+      console.log(`Generating new project content for: ${project.name}`);
+      const projectZoomContent = await generateProjectZoomContent(project);
+      zoomProjects.push(projectZoomContent);
+      projectCache[project.id] = {
+        projectSignature: currentSignature,
+        zoomContent: projectZoomContent,
+      };
+    }
+  }
+
+  const introDoc = portfolioData.root.children?.find(item => item.name === '_intro' && item.type === 'page');
+  let introContent: ParsedParagraph[] | null = null;
+  if (introDoc && introDoc.content) {
+    console.log('Parsing intro document...');
+    introContent = parseIntroText(introDoc.content, projects);
   }
 
   const zoomContent = {
     siteHeader: "Hi, I'm Yotam — designer working with AI and the web.",
     projects: zoomProjects,
+    introContent: introContent,
   };
   
   // Save zoom content separately for easy access
@@ -642,6 +720,66 @@ async function main() {
   fs.writeFileSync(LAST_FETCH_FILE, new Date().toISOString());
 
   console.log(`Content generation complete. Data saved to ${outputPath}`);
+}
+
+function parseIntroText(text: string, projects: ContentItem[]): ParsedParagraph[] {
+  // Split by double line breaks to identify paragraphs
+  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+  
+  return paragraphs.map(paragraphText => {
+    const segments: ParsedContentSegment[] = [];
+    let lastIndex = 0;
+    
+    // Updated Regex:
+    // 1. [[Project Links]]
+    // 2. [External Link] http...
+    // 3. [Page Link]
+    const regex = /\[\[(.*?)\]\]|\[(.*?)\]\s+(https?:\/\/[^\s]+|[\w.-]+@[\w.-]+\.\w+)|\[(.*?)\]/g;
+    let match;
+
+    while ((match = regex.exec(paragraphText)) !== null) {
+      // Add the text segment before the current match
+      if (match.index > lastIndex) {
+        segments.push({ type: 'text', content: paragraphText.substring(lastIndex, match.index) });
+      }
+
+      const projectLinkName = match[1];
+      const externalLinkName = match[2];
+      const externalLinkUrl = match[3];
+      const pageLinkName = match[4];
+
+      if (projectLinkName) {
+        // It's a project link like [[My Project]]
+        const project = projects.find(p => p.name.trim().toLowerCase() === projectLinkName.trim().toLowerCase());
+        if (project) {
+          segments.push({ type: 'projectLink', text: projectLinkName, projectId: project.id });
+        } else {
+          console.warn(`Warning: Project link "[[${projectLinkName}]]" found in intro, but no matching project exists.`);
+          segments.push({ type: 'text', content: match[0] });
+        }
+      } else if (externalLinkName && externalLinkUrl) {
+        // It's an external or email link like [CV] http...
+        if (externalLinkUrl.includes('@')) {
+          segments.push({ type: 'emailLink', text: externalLinkName.trim(), email: externalLinkUrl });
+        } else {
+          segments.push({ type: 'externalLink', text: externalLinkName.trim(), url: externalLinkUrl });
+        }
+      } else if (pageLinkName) {
+        // It's a page link like [About]
+        const path = `/${pageLinkName.toLowerCase().replace(/\s+/g, '-')}`;
+        segments.push({ type: 'pageLink', text: pageLinkName, path: path });
+      }
+      
+      lastIndex = regex.lastIndex;
+    }
+
+    // Add any remaining text after the last match
+    if (lastIndex < paragraphText.length) {
+      segments.push({ type: 'text', content: paragraphText.substring(lastIndex) });
+    }
+
+    return segments;
+  });
 }
 
 main().catch(console.error); 

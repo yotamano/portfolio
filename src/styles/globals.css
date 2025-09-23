@@ -66,9 +66,6 @@ h1, h2, p {
   transition: box-shadow 0.3s ease-in-out, padding-top 0.3s ease-in-out, padding-bottom 0.3s ease-in-out;
 }
 
-.zoom-level-0.active.scrolled {
-}
-
 .zoom-level-0.active.header-collapsible {
   cursor: pointer;
   pointer-events: auto;
@@ -84,6 +81,40 @@ h1, h2, p {
   overflow: hidden; /* For animations */
 }
 
+.zoom-level-1.project-expanded {
+  overflow: visible;
+}
+
+.zoom-level-1.project-expanded .project-index {
+  padding-top: 0;
+}
+
+.intro-text-container {
+  padding-bottom: 2rem; /* Add some space between the intro and the project list */
+}
+
+.text-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  border-bottom: 1px solid var(--text-color);
+  display: inline;
+  line-height: 1; /* Adjust to better align with the text */
+}
+
+.text-link-button:hover {
+  border-bottom: 1px solid transparent;
+}
+
+
+/* ---------------------------------- */
+/*           Project Component        */
+/* ---------------------------------- */
 .project-index {
   padding: 0;
   margin-top: 20px;
@@ -189,7 +220,7 @@ h1, h2, p {
 }
 
 .black-container {
-  background-color: #888;
+  background-color: #000000;
   padding: 100px 100px;
   border-radius: 0;
 }
@@ -232,6 +263,21 @@ h1, h2, p {
 /* Layout D: Single Asset in Container */
 .layout-d {
   /* The black-container class provides the main styling */
+  .layout-d > * {
+    max-width: 100%; /* Ensure single items don't overflow */
+  }
+}
+
+.credits-grid {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 0.25rem 1rem;
+  margin-top: 1rem;
+}
+
+.credits-grid p {
+  margin: 0;
+  line-height: 1.4;
 }
 
 /* Ensure media inside containers respects padding and radius */
@@ -251,4 +297,16 @@ h1, h2, p {
 
 .hyperlink-style:hover {
     color: black;
+}
+
+.next-project-sticky-container {
+  position: -webkit-sticky;
+  position: sticky;
+  bottom: 0;
+  background-color: #ffffff;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  z-index: 5;
+  cursor: pointer;
+  will-change: opacity;
 }

@@ -40,7 +40,8 @@ export type PortfolioItem = ContentItem;
 export type L3Block = 
   | { type: 'heading'; content: string }
   | { type: 'paragraph'; content: string }
-  | { type: 'link'; url: string; text: string };
+  | { type: 'link'; url: string; text: string }
+  | { type: 'credits', items: { role: string; name: string; url?: string }[] };
 
 export interface ZoomProject {
   id: string;
@@ -55,4 +56,14 @@ export interface ZoomProject {
 export interface ZoomContent {
   siteHeader: string;
   projects: ZoomProject[];
-} 
+  introContent?: ParsedParagraph[];
+}
+
+export type ParsedContentSegment =
+  | { type: 'text'; content: string }
+  | { type: 'projectLink'; text: string; projectId: string }
+  | { type: 'pageLink'; text: string; path: string }
+  | { type: 'externalLink'; text: string; url: string }
+  | { type: 'emailLink'; text: string; email: string };
+
+export type ParsedParagraph = ParsedContentSegment[]; 
