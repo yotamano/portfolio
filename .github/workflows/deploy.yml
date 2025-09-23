@@ -35,7 +35,9 @@ jobs:
           SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
       
       - name: Generate Content 📝
-        run: npm run generate-content
+        run: |
+          mkdir -p public/content
+          npm run generate-content
         env:
           DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
