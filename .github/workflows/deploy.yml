@@ -29,6 +29,14 @@ jobs:
       - name: Install Dependencies 📦
         run: npm ci
       
+      - name: Cache content files
+        uses: actions/cache@v3
+        with:
+          path: public/content
+          key: ${{ runner.os }}-content-${{ hashFiles('**/src/scripts/generateContent.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-content-
+      
       - name: Debug Cloudinary Secret
         run: echo "Length of Cloudinary API Secret is ${#SECRET}"
         env:
