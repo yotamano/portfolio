@@ -10,8 +10,8 @@ const nextConfig = {
   },
   trailingSlash: true,
   // Add basePath for GitHub Pages deployment
-  basePath: isGitHubPages ? '/drive-portfolio' : '',
-  assetPrefix: isGitHubPages ? '/drive-portfolio' : '',
+  basePath: isGitHubPages ? '/portfolio' : '',
+  assetPrefix: isGitHubPages ? '/portfolio' : '',
 };
 
 module.exports = nextConfig; 
