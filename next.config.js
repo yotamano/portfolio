@@ -8,9 +8,7 @@ const nextConfig = {
     domains: ['drive.google.com', 'lh3.googleusercontent.com'],
     unoptimized: true,
   },
-  output: 'export',
   trailingSlash: true,
-  distDir: 'out',
   // Add basePath for GitHub Pages deployment
   basePath: isGitHubPages ? '/drive-portfolio' : '',
   assetPrefix: isGitHubPages ? '/drive-portfolio' : '',
