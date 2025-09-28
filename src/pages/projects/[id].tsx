@@ -323,7 +323,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       .map((segment: ParsedContentSegment) => (segment as { type: 'projectLink', projectId: string }).projectId);
 
     orderedProjects = projectOrder
-      .map((projectId: string) => allProjects.find(p => p.id === projectId))
+      .map((projectId: string) => allProjects.find((p: PortfolioItem) => p.id === projectId))
       .filter((p): p is PortfolioItem => p !== undefined);
 
     const projectsInOrder = new Set(orderedProjects.map(p => p.id));
