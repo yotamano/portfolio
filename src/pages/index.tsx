@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PortfolioData, ZoomContent } from '../types';
-import { StreamedText, AnimatedTitle, StreamedParagraph } from '../components/animations';
+import { StreamedText, AnimatedTitle, StreamedParagraph, Ticker } from '../components/animations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/router';
 
@@ -55,11 +55,17 @@ export default function HomePage({ portfolioData, zoomContent }: { portfolioData
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
             >
-              <AnimatedTitle
-                text="Hi, I'm Yotam"
-                className="text-title-style"
-                style={{ marginBottom: 0 }}
-              />
+              <div className="flex items-baseline">
+                <AnimatedTitle
+                  text="Hi, I'm Yotam"
+                  className="text-title-style"
+                  style={{ marginBottom: 0, marginRight: 0 }}
+                />
+                <Ticker 
+                  text="WIP" 
+                  speed={25}
+                />
+              </div>
               <StreamedText
                 text="designer working with AI and the web."
                 className="text-paragraph-style mb-0"

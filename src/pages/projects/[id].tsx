@@ -7,6 +7,16 @@ import { motion, AnimatePresence, useMotionValue, useTransform, useInView, useSc
 import { StreamedText, Shimmer, AnimatedTitle } from '../../components/animations';
 import { ExternalLinkIcon } from '../../components/animations/Icon';
 import { useHeader } from '../../context/HeaderContext';
+import Link from 'next/link';
+
+type ParsedContentSegment =
+    | { type: 'text'; content: string }
+    | { type: 'projectLink'; text: string; projectId: string }
+    | { type: 'pageLink'; text: string; path: string }
+    | { type: 'emailLink'; text: string; email: string }
+    | { type: 'externalLink'; text: string; url: string };
+
+type ParsedParagraph = ParsedContentSegment[];
 
 const renderMedia = (media: MediaFile, index: number, isReady: boolean) => {
     const isVideo = media.mimeType.startsWith('video/');
@@ -65,9 +75,10 @@ const renderMedia = (media: MediaFile, index: number, isReady: boolean) => {
 type ProjectPageProps = {
   project: PortfolioItem;
   zoomProject?: ZoomProject;
+  nextProject?: PortfolioItem;
 };
 
-export default function ProjectPage({ project, zoomProject }: ProjectPageProps) {
+export default function ProjectPage({ project, zoomProject, nextProject }: ProjectPageProps) {
     const [mainContentBlocks, setMainContentBlocks] = useState<L3Block[]>([]);
     const [metadataBlocks, setMetadataBlocks] = useState<L3Block[]>([]);
     const creditsRef = useRef(null);
@@ -247,6 +258,32 @@ export default function ProjectPage({ project, zoomProject }: ProjectPageProps) 
             </div>
           </div>
         </div>
+        {nextProject && (
+          <div className="content-padding" style={{ marginTop: '4rem' }}>
+            <Link href={`/projects/${nextProject.id}`} legacyBehavior passHref>
+              <motion.a
+                className="hyperlink-style text-paragraph-style text-text-secondary"
+                style={{ position: 'relative', display: 'inline-block' }}
+                whileHover="hover"
+                initial="rest"
+                animate="rest"
+              >
+                Next project: {nextProject.name}
+                <motion.span
+                  style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', backgroundColor: '#888888' }}
+                />
+                <motion.span
+                  style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', backgroundColor: 'black', originX: 0 }}
+                  variants={{
+                    rest: { scaleX: 0 },
+                    hover: { scaleX: 1 }
+                  }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                />
+              </motion.a>
+            </Link>
+          </div>
+        )}
         <div style={{ height: '350px' }} />
       </div>
     );
@@ -272,8 +309,33 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const contentJson = fs.readFileSync(contentPath, 'utf8');
   const portfolioData: PortfolioData = JSON.parse(contentJson);
 
-  const projects = portfolioData.root.children?.filter(item => item.type === 'project') || [];
-  const project = projects.find(p => p.id === id);
+  const allProjects = portfolioData.root.children?.filter(item => item.type === 'project') || [];
+
+  const zoomContentPath = path.join(process.cwd(), 'public', 'content', 'zoom-content.json');
+  let orderedProjects = allProjects;
+
+  try {
+    const zoomContentJson = fs.readFileSync(zoomContentPath, 'utf8');
+    const zoomContent = JSON.parse(zoomContentJson);
+    const projectOrder = zoomContent.introContent
+      .flat()
+      .filter((segment: ParsedContentSegment) => segment.type === 'projectLink')
+      .map((segment: ParsedContentSegment) => (segment as { type: 'projectLink', projectId: string }).projectId);
+
+    orderedProjects = projectOrder
+      .map((projectId: string) => allProjects.find(p => p.id === projectId))
+      .filter((p): p is PortfolioItem => p !== undefined);
+
+    const projectsInOrder = new Set(orderedProjects.map(p => p.id));
+    const remainingProjects = allProjects.filter(p => !projectsInOrder.has(p.id));
+    orderedProjects.push(...remainingProjects);
+
+  } catch (error) {
+    console.log('Could not read or parse zoom-content.json for project ordering, falling back to default order:', error);
+  }
+
+  const projectIndex = orderedProjects.findIndex(p => p.id === id);
+  const project = orderedProjects[projectIndex];
 
   if (!project) {
     return {
@@ -281,7 +343,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
   }
 
-  const zoomContentPath = path.join(process.cwd(), 'public', 'content', 'zoom-content.json');
+  const nextProject = orderedProjects[(projectIndex + 1) % orderedProjects.length];
+
   let zoomProject: ZoomProject | null = null;
   try {
     const zoomContentJson = fs.readFileSync(zoomContentPath, 'utf8');
@@ -295,6 +358,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       project,
       zoomProject,
+      nextProject,
     },
   };
 };

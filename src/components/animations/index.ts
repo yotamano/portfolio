@@ -2,3 +2,4 @@ export { default as StreamedText } from './StreamedText';
 export { default as Shimmer } from './Shimmer';
 export { default as AnimatedTitle } from './AnimatedTitle';
 export { default as StreamedParagraph } from './StreamedParagraph';
+export { default as Ticker } from './Ticker';

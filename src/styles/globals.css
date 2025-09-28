@@ -291,7 +291,6 @@ h1, h2, p {
   display: inline-block;
   cursor: pointer;
   text-decoration: none;
-  color: inherit;
   transition: color 0.3s ease-in-out;
 }
 
@@ -309,4 +308,53 @@ h1, h2, p {
   z-index: 5;
   cursor: pointer;
   will-change: opacity;
+}
+
+/* ---------------------------------- */
+/*          Ticker Animation          */
+/* ---------------------------------- */
+.ticker-container {
+  --gap: 0.25rem;
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  gap: var(--gap);
+}
+
+.ticker-content-wrapper {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--gap);
+  animation: scroll var(--animation-duration, 10s) linear infinite;
+}
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+}
+
+/* ---------------------------------- */
+/*           Mobile Styles            */
+/* ---------------------------------- */
+@media (max-width: 900px) {
+  .content-padding {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+
+  .zoom-level-0 {
+    padding-top: 25px;
+  }
+
+  .black-container {
+    padding: 25px;
+  }
+
+  .hide-on-mobile {
+    display: none;
+  }
 }

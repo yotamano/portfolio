@@ -105,20 +105,22 @@ const Layout: React.FC<LayoutProps> = ({ children, portfolioData, title }) => {
                       / {projectName}
                     </motion.span>
                   </motion.span>
-                  <span
-                    aria-hidden="true"
-                    style={{ display: 'inline-block', verticalAlign: 'bottom' }}
-                  >
-                    {postWords.map((word, i) => (
-                      <motion.span
-                        key={`post-${i}`}
-                        animate={{ opacity: isScrolled ? 0 : 1 }}
-                        transition={{ duration: 0.2, ease: 'easeInOut', delay: (preWords.length + i) * 0.03 }}
-                        style={{ display: 'inline-block', marginRight: '0.25em' }}
-                      >
-                        {word}
-                      </motion.span>
-                    ))}
+                  <span className="hide-on-mobile">
+                    <span
+                      aria-hidden="true"
+                      style={{ display: 'inline-block', verticalAlign: 'bottom' }}
+                    >
+                      {postWords.map((word, i) => (
+                        <motion.span
+                          key={`post-${i}`}
+                          animate={{ opacity: isScrolled ? 0 : 1 }}
+                          transition={{ duration: 0.2, ease: 'easeInOut', delay: (preWords.length + i) * 0.03 }}
+                          style={{ display: 'inline-block', marginRight: '0.25em' }}
+                        >
+                          {word}
+                        </motion.span>
+                      ))}
+                    </span>
                   </span>
                 </a>
               </Link>
