@@ -327,7 +327,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       .filter((p): p is PortfolioItem => p !== undefined);
 
     const projectsInOrder = new Set(orderedProjects.map(p => p.id));
-    const remainingProjects = allProjects.filter(p => !projectsInOrder.has(p.id));
+    const remainingProjects = allProjects.filter((p: PortfolioItem) => !projectsInOrder.has(p.id));
     orderedProjects.push(...remainingProjects);
 
   } catch (error) {
