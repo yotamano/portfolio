@@ -85,6 +85,8 @@ export default function ProjectPage({ project, zoomProject, nextProject }: Proje
     const { setHeaderState } = useHeader();
     const titleRef = useRef(null);
     const isTitleInView = useInView(titleRef, { margin: "-100px 0px 0px 0px" });
+    const nextProjectRef = useRef<HTMLDivElement>(null);
+    const isNextProjectInView = useInView(nextProjectRef, { amount: 0.1 });
 
     useEffect(() => {
         setHeaderState({
@@ -259,32 +261,49 @@ export default function ProjectPage({ project, zoomProject, nextProject }: Proje
           </div>
         </div>
         {nextProject && (
-          <div className="content-padding" style={{ marginTop: '4rem' }}>
-            <Link href={`/projects/${nextProject.id}`} legacyBehavior passHref>
-              <motion.a
-                className="hyperlink-style text-paragraph-style text-text-secondary"
-                style={{ position: 'relative', display: 'inline-block' }}
-                whileHover="hover"
-                initial="rest"
-                animate="rest"
-              >
-                Next project: {nextProject.name}
-                <motion.span
-                  style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', backgroundColor: '#888888' }}
-                />
-                <motion.span
-                  style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', backgroundColor: 'black', originX: 0 }}
-                  variants={{
-                    rest: { scaleX: 0 },
-                    hover: { scaleX: 1 }
-                  }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                />
-              </motion.a>
-            </Link>
-          </div>
+          <>
+            <div ref={nextProjectRef} style={{ height: '400px', marginTop: '4rem' }} />
+            <motion.div
+              className="content-padding"
+              style={{
+                position: isNextProjectInView ? 'fixed' : 'static',
+                bottom: isNextProjectInView ? '15px' : 'auto',
+                left: isNextProjectInView ? '0' : 'auto',
+                right: isNextProjectInView ? '0' : 'auto',
+                backgroundColor: '#ffffff',
+                zIndex: 5,
+                paddingTop: '15px',
+                paddingBottom: '15px'
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isNextProjectInView ? 1 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Link href={`/projects/${nextProject.id}`} legacyBehavior passHref>
+                <motion.a
+                  className="hyperlink-style text-paragraph-style text-text-secondary"
+                  style={{ position: 'relative', display: 'inline-block' }}
+                  whileHover="hover"
+                  initial="rest"
+                  animate="rest"
+                >
+                  Next project: {nextProject.name}
+                  <motion.span
+                    style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', backgroundColor: '#888888' }}
+                  />
+                  <motion.span
+                    style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', backgroundColor: 'black', originX: 0 }}
+                    variants={{
+                      rest: { scaleX: 0 },
+                      hover: { scaleX: 1 }
+                    }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  />
+                </motion.a>
+              </Link>
+            </motion.div>
+          </>
         )}
-        <div style={{ height: '350px' }} />
       </div>
     );
 }
